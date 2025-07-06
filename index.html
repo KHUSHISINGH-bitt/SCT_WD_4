@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khushi's To-Do Garden 🌼</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: #fff8f0;
+      color: #3e3e3e;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 2.2rem;
+      color: #5a3e36;
+    }
+    .quote {
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 1.5rem;
+      color: #86756c;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fffaf6;
+      border: 2px solid #dfcdbf;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    input, select, button {
+      padding: 0.8rem;
+      border: 1px solid #bda89f;
+      border-radius: 8px;
+    }
+    input:focus, select:focus {
+      outline: 2px solid #d4b8aa;
+    }
+    button {
+      background: #f0e3d1;
+      color: #5a3e36;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #e4d2c3;
+    }
+    ul {
+      list-style: none;
+      margin-top: 1rem;
+    }
+    li {
+      background: #fff;
+      border: 1px solid #d8c3b6;
+      border-left: 5px solid #bca18c;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .task-controls button {
+      background: none;
+      border: none;
+      margin-left: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #7b5e54;
+    }
+    .task-controls button:hover {
+      color: #44312b;
+    }
+    .timestamp {
+      font-size: 0.8rem;
+      color: #9a8b82;
+    }
+    .category {
+      font-size: 0.85rem;
+      color: #866b60;
+      margin-top: 4px;
+    }
+    .audio-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #f0e3d1;
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 1001;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fffaf4;
+      color: #5a3e36;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      z-index: 1000;
+      transition: opacity 1s ease;
+    }
+    .overlay button {
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay">
+    <p>🌼 Welcome to Khushi’s To-Do Garden</p>
+    <button onclick="startApp()">Click to Begin ✨</button>
+  </div>
+
+  <h1>🌷 Khushi's To-Do Garden</h1>
+  <p class="quote" id="quote">"Let your dreams blossom like wildflowers."</p>
+  <div class="container">
+    <div class="input-section">
+      <input type="text" id="taskInput" placeholder="Add a gentle reminder...">
+      <input type="datetime-local" id="taskDate">
+      <select id="taskCategory">
+        <option value="🌱 Self">🌱 Self</option>
+        <option value="📚 Study">📚 Study</option>
+        <option value="🫖 Chill">🫖 Chill</option>
+      </select>
+      <button onclick="addTask()">Add to Garden 🌿</button>
+    </div>
+    <ul id="taskList"></ul>
+  </div>
+
+  <button class="audio-controls" onclick="toggleMusic()" id="musicToggle">🔈 Music On</button>
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/23/audio_e79ca3e74d.mp3?filename=healing-112800.mp3" type="audio/mp3">
+  </audio>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function addTask() {
+      const taskInput = document.getElementById('taskInput');
+      const taskDate = document.getElementById('taskDate');
+      const taskCategory = document.getElementById('taskCategory');
+      if (!taskInput.value.trim()) return;
+
+      const task = {
+        id: Date.now(),
+        text: taskInput.value,
+        date: taskDate.value,
+        category: taskCategory.value,
+        completed: false
+      };
+
+      tasks.push(task);
+      saveTasks();
+      renderTasks();
+      taskInput.value = '';
+      taskDate.value = '';
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = '';
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        if (task.completed) li.classList.add('completed');
+
+        let categoryIcon = '';
+        if (task.category.includes('Self')) categoryIcon = '🌱';
+        else if (task.category.includes('Study')) categoryIcon = '📚';
+        else if (task.category.includes('Chill')) categoryIcon = '🫖';
+
+        li.innerHTML = `
+          <div>
+            <strong>${task.text}</strong>
+            <div class="timestamp">📅 ${task.date ? new Date(task.date).toLocaleString() : 'No time set'}</div>
+            <div class="category">${categoryIcon} ${task.category}</div>
+          </div>
+          <div class="task-controls">
+            <button onclick="toggleTask(${task.id})">✔️</button>
+            <button onclick="editTask(${task.id})">✏️</button>
+            <button onclick="deleteTask(${task.id})">🗑️</button>
+          </div>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+      saveTasks();
+      renderTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(task => task.id !== id);
+      saveTasks();
+      renderTasks();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      const newText = prompt("Edit your task:", task.text);
+      if (newText !== null) {
+        task.text = newText;
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    const quotes = [
+      "Let your dreams blossom like wildflowers.",
+      "Small steps every day lead to big changes.",
+      "Grow through what you go through.",
+      "Be gentle with yourself, you’re doing your best.",
+      "Each day is a fresh flower in your bouquet."
+    ];
+    document.getElementById('quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
+
+    function toggleMusic() {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.textContent = '🔈 Music On';
+      } else {
+        bgMusic.pause();
+        musicToggle.textContent = '🔇 Music Off';
+      }
+    }
+
+    function startApp() {
+      const overlay = document.getElementById('overlay');
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.style.display = 'none', 1000);
+      bgMusic.play().catch(() => {});
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>
